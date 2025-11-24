@@ -1,0 +1,69 @@
+from django.db import models
+
+
+class UserRole(models.TextChoices):
+    """User roles for RBAC"""
+    ROOT = 'root', 'Root'
+    ADMIN = 'admin', 'Admin'
+    USER = 'user', 'User'
+
+
+class User(models.Model):
+    """
+    User model for {{projectName}}
+
+    Represents a user in the system with authentication and profile information
+    """
+    # Base fields (equivalent to BaseEntity in Spring)
+    deleted = models.BooleanField(default=False)
+    delete_reason = models.CharField(max_length=500, blank=True, null=True)
+    tenant_id = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.CharField(max_length=100, blank=True, null=True)
+    modified_by = models.CharField(max_length=100, blank=True, null=True)
+    slug = models.CharField(max_length=255, blank=True, null=True)
+
+    # User-specific fields
+    username = models.CharField(max_length=50, unique=True)
+    email = models.EmailField(max_length=255, unique=True)
+    first_name = models.CharField(max_length=100, blank=True, null=True)
+    last_name = models.CharField(max_length=100, blank=True, null=True)
+    picture = models.URLField(max_length=500, blank=True, null=True)
+    external_auth_provider = models.CharField(max_length=50, blank=True, null=True)
+    external_auth_id = models.CharField(max_length=255, blank=True, null=True)
+    enabled = models.BooleanField(default=True)
+    roles = models.JSONField(default=list)
+
+    class Meta:
+        db_table = 'users'
+        indexes = [
+            models.Index(fields=['email'], name='idx_user_email'),
+            models.Index(fields=['username'], name='idx_user_username'),
+        ]
+
+    def __str__(self):
+        return self.username
+
+    @property
+    def full_name(self):
+        """Get user's full name"""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        return self.username
+
+    def has_role(self, role: str) -> bool:
+        """Check if user has a specific role"""
+        return role in self.roles
+
+    def is_root(self) -> bool:
+        """Check if user has root role"""
+        return UserRole.ROOT in self.roles
+
+    def is_admin(self) -> bool:
+        """Check if user has admin role"""
+        return UserRole.ADMIN in self.roles or self.is_root()

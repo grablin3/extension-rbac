@@ -1,0 +1,171 @@
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.conf import settings
+import logging
+
+from .models import User, UserRole
+from .serializers import UserSerializer, UserProfileSerializer
+
+logger = logging.getLogger(__name__)
+
+
+class UserProfileView(APIView):
+    """
+    User Profile endpoint for {{projectName}}
+
+    Provides endpoints for authenticated users to access their profile information
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Get the current user's profile"""
+        # User is attached to request by authentication middleware
+        user = request.user
+
+        logger.debug(f"Fetching profile for user: {user.email}")
+
+        serializer = UserProfileSerializer(user)
+        return Response({
+            'success': True,
+            'data': serializer.data
+        })
+
+
+class UserService:
+    """Service class for user management operations"""
+
+    @staticmethod
+    def get_root_users():
+        """Get list of root user emails from settings"""
+        root_users = getattr(settings, 'APP_ROOT_USERS', '')
+        if root_users:
+            return [email.strip() for email in root_users.split(',')]
+        return []
+
+    @staticmethod
+    def get_admin_users():
+        """Get list of admin user emails from settings"""
+        admin_users = getattr(settings, 'APP_ADMIN_USERS', '')
+        if admin_users:
+            return [email.strip() for email in admin_users.split(',')]
+        return []
+
+    @staticmethod
+    def find_by_email(email):
+        """Find user by email"""
+        try:
+            return User.objects.get(email=email, deleted=False)
+        except User.DoesNotExist:
+            return None
+
+    @staticmethod
+    def find_by_external_auth(provider, external_id):
+        """Find user by external auth provider and ID"""
+        try:
+            return User.objects.get(
+                external_auth_provider=provider,
+                external_auth_id=external_id,
+                deleted=False
+            )
+        except User.DoesNotExist:
+            return None
+
+    @staticmethod
+    def find_by_username(username):
+        """Find user by username"""
+        try:
+            return User.objects.get(username=username, deleted=False)
+        except User.DoesNotExist:
+            return None
+
+    @classmethod
+    def create_or_update_user(cls, email, external_provider, external_id,
+                              first_name=None, last_name=None, picture=None):
+        """Create or update a user from external auth"""
+        existing_user = cls.find_by_external_auth(external_provider, external_id)
+
+        if existing_user:
+            user = existing_user
+            logger.debug(f"Updating existing user: {email}")
+        else:
+            # Determine roles for new user
+            roles = [UserRole.USER]
+            root_users = cls.get_root_users()
+            admin_users = cls.get_admin_users()
+
+            if email.lower() in [e.lower() for e in root_users]:
+                logger.warning(f"Creating root user: {email}")
+                roles = [UserRole.ROOT, UserRole.ADMIN, UserRole.USER]
+            elif email.lower() in [e.lower() for e in admin_users]:
+                logger.warning(f"Creating admin user: {email}")
+                roles = [UserRole.ADMIN, UserRole.USER]
+
+            # Generate username from email
+            username = email.split('@')[0]
+            base_username = username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+
+            user = User(
+                username=username,
+                email=email,
+                external_auth_provider=external_provider,
+                external_auth_id=external_id,
+                roles=roles
+            )
+            logger.debug(f"Creating new user: {email}")
+
+        # Update user information
+        user.first_name = first_name
+        user.last_name = last_name
+        user.picture = picture
+        user.email = email
+        user.save()
+
+        return user
+
+    @staticmethod
+    def find_by_role(role):
+        """Find all users with a specific role"""
+        return User.objects.filter(roles__contains=[role], deleted=False)
+
+    @staticmethod
+    def soft_delete_user(user_id, reason=None):
+        """Soft delete a user"""
+        try:
+            user = User.objects.get(id=user_id)
+            user.deleted = True
+            user.delete_reason = reason
+            user.save()
+            logger.info(f"Soft deleted user: {user.email} with reason: {reason}")
+            return True
+        except User.DoesNotExist:
+            return False
+
+    @staticmethod
+    def add_role(user_id, role):
+        """Add a role to a user"""
+        try:
+            user = User.objects.get(id=user_id)
+            if role not in user.roles:
+                user.roles.append(role)
+                user.save()
+            return user
+        except User.DoesNotExist:
+            raise ValueError(f"User not found: {user_id}")
+
+    @staticmethod
+    def remove_role(user_id, role):
+        """Remove a role from a user"""
+        try:
+            user = User.objects.get(id=user_id)
+            if role in user.roles:
+                user.roles.remove(role)
+                user.save()
+            return user
+        except User.DoesNotExist:
+            raise ValueError(f"User not found: {user_id}")

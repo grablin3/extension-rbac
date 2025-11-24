@@ -1,27 +1,27 @@
 {
   "version": "3.0.0",
   "metadata": {
-    "id": "extension-springsecurity",
-    "name": "Spring Security & User Management",
+    "id": "extension-rbac",
+    "name": "Role-Based Access Control",
     "kind": "extension",
-    "type": "springsecurity",
+    "type": "rbac",
     "layers": [
       "backend"
     ],
-    "description": "Adds Spring Security with user authentication, role-based access control, and user management",
+    "description": "Adds user authentication, role-based access control, and user management for Spring Boot and Django REST Framework",
     "version": "1.0.0",
     "author": "Genesis Team",
     "tags": [
       "security",
       "authentication",
-      "spring-security",
       "users",
       "rbac",
-      "spring"
+      "roles"
     ],
     "providers": ["aws"],
     "compatibleWith": [
-      "spring"
+      "spring",
+      "drf"
     ],
     "dependsOn": [
       "extension-database"
@@ -29,6 +29,7 @@
     "springProfiles": [
       "security"
     ],
+    "djangoSettings": [],
     "allowMultiple": false
   },
   "scaffoldConfigTemplate": [
@@ -52,6 +53,9 @@
       "<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security</artifactId></dependency>",
       "<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-oauth2-resource-server</artifactId></dependency>",
       "<dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><version>3.18.0</version></dependency>"
+    ],
+    "pip": [
+      "djangorestframework-simplejwt==5.3.1"
     ]
   },
   "generation": {

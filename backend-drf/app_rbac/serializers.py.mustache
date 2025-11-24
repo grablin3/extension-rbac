@@ -1,0 +1,44 @@
+from rest_framework import serializers
+from .models import User, UserRole
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """Serializer for User model"""
+    full_name = serializers.ReadOnlyField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'full_name',
+            'picture',
+            'external_auth_provider',
+            'enabled',
+            'roles',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'full_name']
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for user's own profile (limited fields)"""
+    full_name = serializers.ReadOnlyField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'full_name',
+            'picture',
+            'roles',
+        ]
+        read_only_fields = ['id', 'username', 'email', 'roles', 'full_name']
