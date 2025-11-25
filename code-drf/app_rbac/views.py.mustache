@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
 import logging
+import uuid
 
 from .models import User, UserRole
 from .serializers import UserSerializer, UserProfileSerializer
@@ -16,20 +17,32 @@ class UserProfileView(APIView):
     User Profile endpoint for {{projectName}}
 
     Provides endpoints for authenticated users to access their profile information
+    Returns user data from database (after Auth0UserSyncMiddleware has synced the user)
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """Get the current user's profile"""
-        # User is attached to request by authentication middleware
-        user = request.user
+        """Get the current user's profile from database"""
+        # Extract email from Auth0 JWT token payload
+        auth0_user = request.user
+        email = auth0_user.email
 
-        logger.debug(f"Fetching profile for user: {user.email}")
+        logger.debug(f"Fetching profile for user: {email}")
 
-        serializer = UserProfileSerializer(user)
+        # Fetch actual user from database (should exist after middleware sync)
+        try:
+            db_user = User.objects.get(email=email, deleted=False)
+        except User.DoesNotExist:
+            return Response({
+                'requestId': str(uuid.uuid4()),
+                'error': 'User not found in database',
+                'message': f'User with email {email} not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserProfileSerializer(db_user)
         return Response({
-            'success': True,
-            'data': serializer.data
+            'requestId': str(uuid.uuid4()),
+            'response': serializer.data
         })
 
 

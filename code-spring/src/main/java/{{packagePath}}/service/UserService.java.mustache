@@ -50,20 +50,22 @@ public class UserService {
             user = existingUser.get();
             log.debug("Updating existing user: {}", email);
         } else {
-            List<UserRole> roles = List.of(UserRole.USER);
+            List<UserRole> roles = new java.util.ArrayList<>(List.of(UserRole.USER));
             if (StringUtils.equalsIgnoreCase(rootUser, email)) {
                 log.warn("Creating root user: {}", email);
-                roles = List.of(UserRole.ROOT, UserRole.ADMIN, UserRole.USER);
-            } else if (adminUsers.stream().anyMatch(i -> StringUtils.equalsIgnoreCase(i, email))) {
+                roles = new java.util.ArrayList<>(List.of(UserRole.ROOT, UserRole.ADMIN, UserRole.USER));
+            } else if (adminUsers != null && adminUsers.stream().anyMatch(i -> StringUtils.equalsIgnoreCase(i, email))) {
                 log.warn("Creating admin user: {}", email);
-                roles = List.of(UserRole.ADMIN, UserRole.USER);
+                roles = new java.util.ArrayList<>(List.of(UserRole.ADMIN, UserRole.USER));
             }
             user = UserEntity.builder()
                     .tenantId(tenantId)
+                    .username(email)
                     .email(email)
                     .externalAuthProvider(externalProvider)
                     .externalAuthId(externalId)
                     .roles(roles)
+                    .enabled(true)
                     .build();
             log.debug("Creating new user: {}", email);
         }

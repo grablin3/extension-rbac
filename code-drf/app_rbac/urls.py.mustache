@@ -4,5 +4,5 @@ from .views import UserProfileView
 app_name = 'app_rbac'
 
 urlpatterns = [
-    path('user/profile', UserProfileView.as_view(), name='user-profile'),
+    path('protected/user/profile', UserProfileView.as_view(), name='user-profile'),
 ]

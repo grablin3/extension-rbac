@@ -39,6 +39,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'last_name',
             'full_name',
             'picture',
+            'external_auth_provider',
+            'external_auth_id',
+            'enabled',
             'roles',
         ]
-        read_only_fields = ['id', 'username', 'email', 'roles', 'full_name']
+        read_only_fields = ['id', 'username', 'email', 'roles', 'full_name', 'external_auth_provider', 'external_auth_id', 'enabled']
