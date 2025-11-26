@@ -12,13 +12,15 @@
     "version": "1.0.0",
     "author": "Genesis Team",
     "tags": [
-      "security",
-      "authentication",
-      "users",
       "rbac",
-      "roles"
+      "roles",
+      "users",
+      "security",
+      "authentication"
     ],
-    "providers": ["aws"],
+    "providers": [
+      "aws"
+    ],
     "compatibleWith": [
       "spring",
       "drf"
