@@ -1,5 +1,6 @@
 package {{{javaPackageFull}}}.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,7 @@ import java.util.List;
  * It provides a single CorsConfigurationSource bean that can be
  * injected into any SecurityFilterChain.
  */
+@Slf4j
 @Configuration
 public class CorsConfig {
 
@@ -39,8 +41,13 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Parse CORS origins
-        List<String> originsList = Arrays.asList(corsOrigins.split(","));
+        // Parse CORS origins and trim whitespace
+        List<String> originsList = Arrays.stream(corsOrigins.split(","))
+                .map(String::trim)
+                .toList();
+        
+        log.info("Cors whitelist patterns: {}", originsList);
+
         configuration.setAllowedOriginPatterns(originsList);
 
         // Parse allowed methods
