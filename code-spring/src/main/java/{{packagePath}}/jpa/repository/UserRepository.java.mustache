@@ -58,6 +58,14 @@ public interface UserRepository extends BaseRepository<UserEntity> {
     Optional<UserEntity> findByExternalAuthProviderAndExternalAuthIdAndDeletedFalse(String provider, String externalId);
 
     /**
+     * Find user by external auth ID only (excluding soft-deleted users)
+     *
+     * @param externalId the external auth ID
+     * @return Optional containing the user if found
+     */
+    Optional<UserEntity> findByExternalAuthIdAndDeletedFalse(String externalId);
+
+    /**
      * Find all users by tenant ID (excluding soft-deleted users)
      *
      * @param tenantId the tenant ID

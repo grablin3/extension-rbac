@@ -34,7 +34,7 @@ public class UserEntity extends BaseEntity {
     @Column(name = "last_name", length = 100)
     private String lastName;
 
-    @Column(name = "picture", length = 500)
+    @Column(name = "picture", columnDefinition = "TEXT")
     private String picture;
 
     @Column(name = "external_auth_provider", length = 50)

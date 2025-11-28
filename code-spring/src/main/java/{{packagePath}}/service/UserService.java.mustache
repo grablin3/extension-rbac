@@ -37,6 +37,10 @@ public class UserService {
         return userRepository.findByExternalAuthProviderAndExternalAuthIdAndDeletedFalse(provider, externalId);
     }
 
+    public Optional<UserEntity> findByExternalAuthId(String externalId) {
+        return userRepository.findByExternalAuthIdAndDeletedFalse(externalId);
+    }
+
     public Optional<UserEntity> findBySlug(String slug) {
         return userRepository.findBySlugAndDeletedFalse(slug);
     }

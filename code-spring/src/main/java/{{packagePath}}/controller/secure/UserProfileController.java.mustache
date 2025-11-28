@@ -37,11 +37,14 @@ public class UserProfileController {
     @GetMapping("/profile")
     public ResponseEntity<ResponseBody<UserRsp>> getProfile(@AuthenticationPrincipal Jwt jwt) {
         String email = jwt.getClaimAsString("email");
+        String externalAuthId = jwt.getSubject();
 
-        log.debug("Fetching profile for user: {}", email);
+        log.debug("Fetching profile for user: email={}, externalAuthId={}", email, externalAuthId);
 
-        UserEntity user = userService.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found: " + email));
+        // Try by email first, fallback to externalAuthId if email not in JWT
+        UserEntity user = (email != null ? userService.findByEmail(email) : java.util.Optional.<UserEntity>empty())
+            .or(() -> userService.findByExternalAuthId(externalAuthId))
+            .orElseThrow(() -> new RuntimeException("User not found: email=" + email + ", externalAuthId=" + externalAuthId));
 
         UserRsp userRsp = UserRsp.builder()
             .id(user.getId())
