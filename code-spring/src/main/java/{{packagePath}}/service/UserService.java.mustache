@@ -48,7 +48,6 @@ public class UserService {
         UserEntity user;
         if (existingUser.isPresent()) {
             user = existingUser.get();
-            log.debug("Updating existing user: {}", email);
         } else {
             List<UserRole> roles = new java.util.ArrayList<>(List.of(UserRole.USER));
             if (StringUtils.equalsIgnoreCase(rootUser, email)) {
@@ -67,7 +66,7 @@ public class UserService {
                     .roles(roles)
                     .enabled(true)
                     .build();
-            log.debug("Creating new user: {}", email);
+            log.info("Creating new user: {}", email);
         }
 
         // Update user information
@@ -76,7 +75,9 @@ public class UserService {
         user.setPicture(picture);
         user.setEmail(email);
 
-        return userRepository.save(user);
+        UserEntity savedUser = userRepository.save(user);
+        userRepository.flush(); // Force immediate write to database
+        return savedUser;
     }
 
     public List<UserEntity> findByTenant(String tenantId) {
