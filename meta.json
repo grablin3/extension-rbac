@@ -85,7 +85,8 @@
       "targets": [
         "backend"
       ],
-      "commonForAllEnv": false
+      "commonForAllEnv": false,
+      "gitStoreKey": "JWT_SECRET_KEY"
     },
     {
       "key": "JWT_EXPIRATION_MS",
